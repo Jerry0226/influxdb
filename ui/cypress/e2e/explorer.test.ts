@@ -352,6 +352,12 @@ describe('DataExplorer', () => {
   describe('raw script editing', () => {
     beforeEach(() => {
       cy.getByTestID('switch-to-script-editor').click()
+
+      cy.get<$CM>('.CodeMirror').then($cm => {
+        const cm = $cm[0].CodeMirror
+        cy.wrap(cm.doc).as('flux')
+        expect(cm.doc.getValue()).to.eq('')
+      })
     })
 
     it('enables the submit button when a query is typed', () => {
@@ -375,12 +381,6 @@ describe('DataExplorer', () => {
 
     it('imports the appropriate packages to build a query', () => {
       cy.getByTestID('functions-toolbar-tab').click()
-
-      cy.get<$CM>('.CodeMirror').then($cm => {
-        const cm = $cm[0].CodeMirror
-        cy.wrap(cm.doc).as('flux')
-        expect(cm.doc.getValue()).to.eq('')
-      })
 
       cy.getByTestID('flux-function from').click()
       cy.getByTestID('flux-function range').click()
@@ -407,12 +407,6 @@ describe('DataExplorer', () => {
 
     it('can use the function selector to build a query', () => {
       cy.getByTestID('functions-toolbar-tab').click()
-
-      cy.get<$CM>('.CodeMirror').then($cm => {
-        const cm = $cm[0].CodeMirror
-        cy.wrap(cm.doc).as('flux')
-        expect(cm.doc.getValue()).to.eq('')
-      })
 
       cy.getByTestID('flux-function from').click()
 
@@ -449,6 +443,10 @@ describe('DataExplorer', () => {
 
     it('shows the empty state when the query returns no results', () => {
       cy.getByTestID('time-machine--bottom').within(() => {
+        // cy.wait is necessary - the {force: true} (which is also necessary with codemirror)
+        // causes cypress not to wait for actionability. The result is that it starts typing
+        // before the textarea is loaded.
+        cy.wait(400)
         cy.get('textarea').type(
           `from(bucket: "defbuck")
   |> range(start: -10s)
@@ -464,7 +462,11 @@ describe('DataExplorer', () => {
     it('can save query as task even when it has a variable', () => {
       const taskName = 'tax'
       // begin flux
-      cy.getByTestID('flux-editor').within(() => {
+      cy.getByTestID('time-machine--bottom').within(() => {
+        // cy.wait is necessary - the {force: true} (which is also necessary with codemirror)
+        // causes cypress not to wait for actionability. The result is that it starts typing
+        // before the textarea is loaded.
+        cy.wait(400)
         cy.get('textarea').type(
           `from(bucket: "defbuck")
   |> range(start: -15m, stop: now())
